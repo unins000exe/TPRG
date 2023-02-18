@@ -1,6 +1,6 @@
 ﻿#include <iostream>
 #include <fstream>
-#include <argparse/argparse.hpp>
+#include <argparse.hpp>
 #include <vector>
 
 using namespace std;
@@ -68,30 +68,30 @@ void add(int k, int j, int m, int n, string file_name)
     outFile.close();
 }
 
-void lfsr(int k, int j, int m, int n, string file_name)
-{
-    ofstream outFile(file_name);
-
-    cout << "Прогресс генерации ПСЧ: \n";
-    int step = n / 10;
-
-    int xn;
-    for (size_t i = 55; i < n; i++)
-    {
-        if (i % step == 0) {
-            cout << '\r' << flush;
-            cout << "  * Выполнено " << (i * 100) / n << "%";
-        }
-
-
-        outFile << xn << endl;
-    }
-
-    cout << '\r' << flush;
-    cout << "  * Выполнено 100% \n" << "Результат генерации ПСЧ записан в " << file_name << "\n";
-
-    outFile.close();
-}
+//void lfsr(int k, int j, int m, int n, string file_name)
+//{
+//    ofstream outFile(file_name);
+//
+//    cout << "Прогресс генерации ПСЧ: \n";
+//    int step = n / 10;
+//
+//    int xn;
+//    for (size_t i = 55; i < n; i++)
+//    {
+//        if (i % step == 0) {
+//            cout << '\r' << flush;
+//            cout << "  * Выполнено " << (i * 100) / n << "%";
+//        }
+//
+//
+//        outFile << xn << endl;
+//    }
+//
+//    cout << '\r' << flush;
+//    cout << "  * Выполнено 100% \n" << "Результат генерации ПСЧ записан в " << file_name << "\n";
+//
+//    outFile.close();
+//}
 
 
 int main(int argc, char* argv[])
