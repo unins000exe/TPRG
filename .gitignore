@@ -1,0 +1,10 @@
+
+*.dat
+TPRG_Task_1/.vs/
+TPRG_Task_1/TPRG_Task_1/Debug
+TPRG_Task_1/TPRG_Task_1/x64
+*.pdb
+*.ilk
+*.user
+*.filters
+*.vcxproj
