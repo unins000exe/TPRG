@@ -2,6 +2,7 @@
 #include <fstream>
 #include <argparse.hpp>
 #include <vector>
+#include <bitset>
 
 using namespace std;
 
@@ -19,7 +20,7 @@ void lc(int x0, int a, int c, int m, int n, string file_name)
             cout << "  * Выполнено " << (i * 100) / n << "%";
         }
 
-        outFile << xn << endl;
+        outFile << xn << ',';
         xn = (a * x0 + c) % m;
         x0 = xn;
     }
@@ -31,21 +32,17 @@ void lc(int x0, int a, int c, int m, int n, string file_name)
 }
 
 
-void add(int k, int j, int m, int n, string file_name)
+void add(int k, int j, int m, vector<int> lag, int n, string file_name)
 {
     ofstream outFile(file_name);
 
     cout << "Прогресс генерации ПСЧ: \n";
     int step = n / 10;
 
-    vector <int> lag = { k, j }; // Первые j чисел определяются по формуле Фибоначчи по модулю m
-
     int xn;
-    for (size_t i = 0; i < j - 2; i++)
+    for (size_t i = 0; i < j; i++)
     {
-        xn = (lag[i] + lag[i + 1]) % m;
-        lag.push_back(xn);
-        outFile << xn << endl;
+        outFile << lag[i] << ',';
     }
 
     for (size_t i = 55; i < n; i++)
@@ -59,7 +56,47 @@ void add(int k, int j, int m, int n, string file_name)
         lag.erase(lag.begin());
         lag.push_back(xn);
 
-        outFile << xn << endl;
+        outFile << xn << ',';
+    }
+
+    cout << '\r' << flush;
+    cout << "  * Выполнено 100% \n" << "Результат генерации ПСЧ записан в " << file_name << "\n";
+
+    outFile.close();
+}
+//
+void lfsr(unsigned int seed, unsigned int coef, int n, string file_name)
+{
+    ofstream outFile(file_name);
+    
+    const size_t reg_size = 32;
+    const bitset<reg_size> coefs(coef);
+    bitset<reg_size> reg(seed); // Первоначальный регистр задаётся пользователем
+
+    cout << "Прогресс генерации ПСЧ: \n";
+    int step = n / 10;
+
+    for (size_t i = 0; i < n; i++)
+    {
+        if (i % step == 0) {
+            cout << '\r' << flush;
+            cout << "  * Выполнено " << (i * 100) / n << "%";
+        }
+
+        bool new_bit = false;
+        for (size_t j = 0; j < reg_size; j++)
+        {
+            if (coefs[j])
+            {
+                new_bit ^= reg[j];
+            }
+        }
+
+        reg >>= 1;
+        reg.set(reg_size - 1, new_bit);
+
+        unsigned int xn = static_cast<unsigned int>(reg.to_ulong());
+        outFile << xn << ',';
     }
 
     cout << '\r' << flush;
@@ -68,47 +105,24 @@ void add(int k, int j, int m, int n, string file_name)
     outFile.close();
 }
 
-//void lfsr(int k, int j, int m, int n, string file_name)
-//{
-//    ofstream outFile(file_name);
-//
-//    cout << "Прогресс генерации ПСЧ: \n";
-//    int step = n / 10;
-//
-//    int xn;
-//    for (size_t i = 55; i < n; i++)
-//    {
-//        if (i % step == 0) {
-//            cout << '\r' << flush;
-//            cout << "  * Выполнено " << (i * 100) / n << "%";
-//        }
-//
-//
-//        outFile << xn << endl;
-//    }
-//
-//    cout << '\r' << flush;
-//    cout << "  * Выполнено 100% \n" << "Результат генерации ПСЧ записан в " << file_name << "\n";
-//
-//    outFile.close();
-//}
-
 
 int main(int argc, char* argv[])
 {
     setlocale(LC_ALL, "Russian");
     // lc(24);
 
-    argparse::ArgumentParser parser("Генератор псевдослучайных чисел", "1.1");
+    argparse::ArgumentParser parser("Генератор псевдослучайных чисел", "1.2");
 
     parser.set_prefix_chars("-/");
     parser.set_assign_chars("=:");
 
     parser.add_argument("/g")
-        .help("Методы генерации ПСЧ: lc");
+        .help("Методы генерации ПСЧ: lc, add \n");
 
     parser.add_argument("/i", "")
-        .help("Инициализационный вектор генератора");
+        .help(R"(Инициализационный вектор генератора (параметры записываются через запятую).
+                 * lc: x0, a, c, m    
+                 * add: k, j, m, j чисел)");
 
     parser.add_argument("/n", "")
         .help("Количество генерируемых чисел")
@@ -171,13 +185,20 @@ int main(int argc, char* argv[])
     if (method_code == "lc") {
         lc(i_vec[0], i_vec[1], i_vec[2], i_vec[3], n, file_name);
     }
-    // /g:add /i:24,55,30000 /n : 100000
+    // /g:add /i:24,55,30000,79,134,213,347,560,907,1467,2374,3841,6215,10056,16271,26327,12598,8925,21523,448,21971,22419,14390,6809,21199,28008,19207,17215,6422,23637,59,23696,23755,17451,11206,28657,9863,8520,18383,26903,15286,12189,27475,9664,7139,16803,23942,10745,4687,15432,20119,5551,25670,1221,26891,28112,23779,17506 /n:100000
     else if (method_code == "add")
     {
-        add(i_vec[0], i_vec[1], i_vec[2], n, file_name);
+        int k = i_vec[0];
+        int j = i_vec[1];
+        int m = i_vec[2];
+        i_vec.erase(i_vec.begin(), i_vec.begin() + 3);
+        add(k, j, m, i_vec, n, file_name);
     }
-
-
+    else if (method_code == "lfsr")
+    {
+        lfsr(i_vec[0], i_vec[1], n, file_name);
+    }
+    
 
     //string method_code = parser.get<string>("код метода");
 
