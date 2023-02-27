@@ -1055,7 +1055,7 @@ public:
             std::exit(0);
           })
           .default_value(false)
-          .help("shows help message and exits")
+          .help("Показывает справку и завершает работу")
           .implicit_value(true)
           .nargs(0);
     }
@@ -1066,7 +1066,7 @@ public:
             std::exit(0);
           })
           .default_value(false)
-          .help("prints version information and exits")
+          .help("Показывает версию и завершает работу")
           .implicit_value(true)
           .nargs(0);
     }
@@ -1327,7 +1327,7 @@ public:
     }
 
     if (!parser.m_positional_arguments.empty()) {
-      stream << "Positional arguments:\n";
+      stream << "Позиционные аргументы:\n";
     }
 
     for (const auto &argument : parser.m_positional_arguments) {
@@ -1337,7 +1337,7 @@ public:
 
     if (!parser.m_optional_arguments.empty()) {
       stream << (parser.m_positional_arguments.empty() ? "" : "\n")
-             << "Optional arguments:\n";
+             << "Аргументы:\n";
     }
 
     for (const auto &argument : parser.m_optional_arguments) {
@@ -1377,7 +1377,7 @@ public:
   auto usage() const -> std::string {
     std::stringstream stream;
 
-    stream << "Usage: " << this->m_program_name;
+    stream << "Использование: " << this->m_program_name;
 
     // Add any options inline here
     for (const auto &argument : this->m_optional_arguments) {
