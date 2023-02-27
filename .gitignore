@@ -8,3 +8,5 @@ TPRG_Task_1/TPRG_Task_1/x64
 *.user
 *.filters
 *.vcxproj
+packages
+*.config
