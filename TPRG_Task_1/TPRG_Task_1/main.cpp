@@ -1,10 +1,12 @@
 ﻿#include <iostream>
 #include <fstream>
-#include <argparse.hpp>
 #include <vector>
 #include <bitset>
+#include <argparse.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 using namespace std;
+using namespace boost;
 
 void lc(int x0, int a, int c, int m, int n, string file_name)
 {
@@ -55,7 +57,7 @@ void add(int k, int j, int m, vector<int> lag, int n, string file_name)
         xn = (lag[j - k] + lag[0]) % m;
         lag.erase(lag.begin());
         lag.push_back(xn);
-
+            
         outFile << xn << ',';
     }
 
@@ -64,14 +66,14 @@ void add(int k, int j, int m, vector<int> lag, int n, string file_name)
 
     outFile.close();
 }
-//
-void lfsr(unsigned int seed, unsigned int coef, int n, string file_name)
+
+void lfsr(unsigned int bit_size, unsigned int seed, unsigned int coef, int n, string file_name)
 {
     ofstream outFile(file_name);
     
-    const size_t reg_size = 32;
-    const bitset<reg_size> coefs(coef);
-    bitset<reg_size> reg(seed); // Первоначальный регистр задаётся пользователем
+
+    dynamic_bitset<> reg(bit_size, seed); // Первоначальное значение регистра задаётся пользователем
+    dynamic_bitset<> coefs(bit_size, coef);
 
     cout << "Прогресс генерации ПСЧ: \n";
     int step = n / 10;
@@ -84,16 +86,50 @@ void lfsr(unsigned int seed, unsigned int coef, int n, string file_name)
         }
 
         bool new_bit = false;
-        for (size_t j = 0; j < reg_size; j++)
+        for (size_t j = 0; j < bit_size; j++)
         {
             if (coefs[j])
             {
                 new_bit ^= reg[j];
             }
         }
+        
+        reg >>= 1;
+        reg.set(bit_size - 1, new_bit);
+
+        unsigned int xn = static_cast<unsigned int>(reg.to_ulong());
+        outFile << xn << ',';
+    }
+
+    cout << '\r' << flush;
+    cout << "  * Выполнено 100% \n" << "Результат генерации ПСЧ записан в " << file_name << "\n";
+
+    outFile.close();
+}
+
+
+void p5(unsigned int p, unsigned int q1, unsigned int q2, unsigned int q3,  unsigned int w, int n, string file_name)
+{
+    ofstream outFile(file_name);
+
+    dynamic_bitset<> reg(w, p); 
+
+    cout << "Прогресс генерации ПСЧ: \n";
+    int step = n / 10;
+   
+    for (size_t i = 0; i < n; i++)
+    {
+        if (i % step == 0) {
+            cout << '\r' << flush;
+            cout << "  * Выполнено " << (i * 100) / n << "%";
+        }
+
+        bool new_bit = false;
+
+        new_bit = reg[q1] ^ reg[q2] ^ reg[q3] ^ reg[0];
 
         reg >>= 1;
-        reg.set(reg_size - 1, new_bit);
+        reg.set(w - 1, new_bit);
 
         unsigned int xn = static_cast<unsigned int>(reg.to_ulong());
         outFile << xn << ',';
@@ -109,9 +145,8 @@ void lfsr(unsigned int seed, unsigned int coef, int n, string file_name)
 int main(int argc, char* argv[])
 {
     setlocale(LC_ALL, "Russian");
-    // lc(24);
 
-    argparse::ArgumentParser parser("Генератор псевдослучайных чисел", "1.2");
+    argparse::ArgumentParser parser("Генератор псевдослучайных чисел", "1.3");
 
     parser.set_prefix_chars("-/");
     parser.set_assign_chars("=:");
@@ -122,7 +157,9 @@ int main(int argc, char* argv[])
     parser.add_argument("/i", "")
         .help(R"(Инициализационный вектор генератора (параметры записываются через запятую).
                  * lc: x0, a, c, m    
-                 * add: k, j, m, j чисел)");
+                 * add: k, j, m, j чисел
+                 * 5p: p, q1, q2, q3, w
+                 * lfsr: число - начальное значения регистра, число - коэффициенты многочлена)");
 
     parser.add_argument("/n", "")
         .help("Количество генерируемых чисел")
@@ -136,7 +173,7 @@ int main(int argc, char* argv[])
     try {
         parser.parse_args(argc, argv);
     }
-    catch (const std::runtime_error& err) {
+    catch (const runtime_error& err) {
         cout << err.what() << endl;
         cout << parser;
         return 1;
@@ -149,14 +186,14 @@ int main(int argc, char* argv[])
 
     if (parser.is_used("/g")) {
         method_code = parser.get("/g");
-        std::cout << "/g: " << method_code << "\n";
+        cout << "/g: " << method_code << "\n";
     }
 
     if (parser.is_used("/i")) {
         string i_str = parser.get<string>("/i");
 
-        std::stringstream ss(i_str);
-        std::string item;
+        stringstream ss(i_str);
+        string item;
 
         while (getline(ss, item, ',')) {
             i_vec.push_back(stoi(item));
@@ -172,12 +209,12 @@ int main(int argc, char* argv[])
 
     if (parser.is_used("/n")) {
         n = parser.get<int>("/n");
-        std::cout << "/n: " << n << "\n";
+        cout << "/n: " << n << "\n";
     }
 
     if (parser.is_used("/f")) {
         file_name = parser.get("/f");
-        std::cout << "/f: " << file_name << "\n";
+        cout << "/f: " << file_name << "\n";
     }
 
 
@@ -196,7 +233,11 @@ int main(int argc, char* argv[])
     }
     else if (method_code == "lfsr")
     {
-        lfsr(i_vec[0], i_vec[1], n, file_name);
+        lfsr(i_vec[0], i_vec[1], i_vec[2], n, file_name);
+    }
+    else if (method_code == "5p")
+    {
+        p5(i_vec[0], i_vec[1], i_vec[2], i_vec[3], i_vec[4], n, file_name);
     }
     
 
