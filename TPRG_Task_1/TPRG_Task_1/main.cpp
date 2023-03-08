@@ -146,20 +146,20 @@ int main(int argc, char* argv[])
 {
     setlocale(LC_ALL, "Russian");
 
-    argparse::ArgumentParser parser("Генератор псевдослучайных чисел", "1.3");
+    argparse::ArgumentParser parser("Генератор псевдослучайных чисел", "1.4");
 
     parser.set_prefix_chars("-/");
     parser.set_assign_chars("=:");
 
     parser.add_argument("/g")
-        .help("Методы генерации ПСЧ: lc, add \n");
+        .help("Методы генерации ПСЧ: lc, add, 5p, lfsr \n");
 
     parser.add_argument("/i", "")
         .help(R"(Инициализационный вектор генератора (параметры записываются через запятую).
                  * lc: x0, a, c, m    
                  * add: k, j, m, j чисел
-                 * 5p: p, q1, q2, q3, w
-                 * lfsr: число - начальное значения регистра, число - коэффициенты многочлена)");
+                 * 5p: p, q1, q2, q3, w (q1, q2, q3 < w < 32)
+                 * lfsr: длина регистра (до 32), начальное значение регистра, коэффициенты многочлена)");
 
     parser.add_argument("/n", "")
         .help("Количество генерируемых чисел")
@@ -240,21 +240,6 @@ int main(int argc, char* argv[])
         p5(i_vec[0], i_vec[1], i_vec[2], i_vec[3], i_vec[4], n, file_name);
     }
     
-
-    //string method_code = parser.get<string>("код метода");
-
-    //int n = parser.get<int>("количество генерируемых чисел");
-
-    //string file_name = parser.get<string>("имя файла вывода");
-
-    //cout << method_code << endl;
-    //cout << n << endl;
-    //cout << file_name << endl;
-
-
-    //cout << method_code << endl << n << endl << file_name << endl;
-
-
     return 0;
 
 }
