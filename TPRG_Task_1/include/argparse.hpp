@@ -1377,7 +1377,7 @@ public:
   auto usage() const -> std::string {
     std::stringstream stream;
 
-    stream << "Использование: " << this->m_program_name;
+    stream << "Программа: " << this->m_program_name;
 
     // Add any options inline here
     for (const auto &argument : this->m_optional_arguments) {

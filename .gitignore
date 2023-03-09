@@ -10,3 +10,6 @@ TPRG_Task_1/TPRG_Task_1/x64
 *.vcxproj
 packages
 *.config
+TPRG_Task_1\x64
+*.iobj
+*.ipdb
