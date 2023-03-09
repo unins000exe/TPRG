@@ -154,14 +154,14 @@ int main(int argc, char* argv[])
     parser.add_argument("/g")
         .help("Методы генерации ПСЧ: lc, add, 5p, lfsr \n");
 
-    parser.add_argument("/i", "")
+    parser.add_argument("/i")
         .help(R"(Инициализационный вектор генератора (параметры записываются через запятую).
                  * lc: m, a, c, x0    
                  * add: m, k, j, j начальных значений
                  * 5p: p, q1, q2, q3, w (q1, q2, q3 < w < 32)
                  * lfsr: двоичный вектор коэффициентов (до 32 бит), начальное значение регистра)");
 
-    parser.add_argument("/n", "")
+    parser.add_argument("/n")
         .help("Количество генерируемых чисел")
         .default_value(int(10000))
         .scan<'i', int>();
