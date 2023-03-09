@@ -8,7 +8,7 @@
 using namespace std;
 using namespace boost;
 
-void lc(int x0, int a, int c, int m, int n, string file_name)
+void lc(int m, int a, int c, int x0, int n, string file_name)
 {
     ofstream outFile(file_name);
 
@@ -34,7 +34,7 @@ void lc(int x0, int a, int c, int m, int n, string file_name)
 }
 
 
-void add(int k, int j, int m, vector<int> lag, int n, string file_name)
+void add(int m, int k, int j, vector<int> lag, int n, string file_name)
 {
     ofstream outFile(file_name);
 
@@ -67,16 +67,16 @@ void add(int k, int j, int m, vector<int> lag, int n, string file_name)
     outFile.close();
 }
 
-void lfsr(unsigned int bit_size, unsigned int seed, unsigned int coef, int n, string file_name)
+void lfsr(string coef, int seed, int n, string file_name)
 {
     ofstream outFile(file_name);
-    
+    const unsigned int bit_size = coef.length();
 
     dynamic_bitset<> reg(bit_size, seed); // Первоначальное значение регистра задаётся пользователем
-    dynamic_bitset<> coefs(bit_size, coef);
+    dynamic_bitset<> coefs(coef);
 
     cout << "Прогресс генерации ПСЧ: \n";
-    int step = n / 10;
+    const int step = n / 10;
 
     for (size_t i = 0; i < n; i++)
     {
@@ -156,10 +156,10 @@ int main(int argc, char* argv[])
 
     parser.add_argument("/i", "")
         .help(R"(Инициализационный вектор генератора (параметры записываются через запятую).
-                 * lc: x0, a, c, m    
-                 * add: k, j, m, j чисел
+                 * lc: m, a, c, x0    
+                 * add: m, k, j, j начальных значений
                  * 5p: p, q1, q2, q3, w (q1, q2, q3 < w < 32)
-                 * lfsr: длина регистра (до 32), начальное значение регистра, коэффициенты многочлена)");
+                 * lfsr: двоичный вектор коэффициентов (до 32 бит), начальное значение регистра)");
 
     parser.add_argument("/n", "")
         .help("Количество генерируемых чисел")
@@ -180,13 +180,14 @@ int main(int argc, char* argv[])
     }
 
     vector <int> i_vec;
+    vector <string> is_vec; // TODO: Возможно стоит придумать что-то получше для lfsr
     string method_code;
     int n = 10000;
     string file_name = "rnd.dat";
 
     if (parser.is_used("/g")) {
         method_code = parser.get("/g");
-        cout << "/g: " << method_code << "\n";
+        //cout << "/g: " << method_code << "\n";
     }
 
     if (parser.is_used("/i")) {
@@ -195,26 +196,36 @@ int main(int argc, char* argv[])
         stringstream ss(i_str);
         string item;
 
-        while (getline(ss, item, ',')) {
-            i_vec.push_back(stoi(item));
-        }
-
-        cout << "/i: ";
-        for (auto x : i_vec)
+        if (method_code == "lfsr")
         {
-            cout << x << " ";
+            while (getline(ss, item, ','))
+            {
+                is_vec.push_back(item);
+            }
         }
-        cout << "\n";
+        else
+        {
+            while (getline(ss, item, ','))
+            {
+                i_vec.push_back(stoi(item));
+            }
+        }
+        //cout << "/i: ";
+        //for (auto x : i_vec)
+        //{
+        //    cout << x << " ";
+        //}
+        //cout << "\n";
     }
 
     if (parser.is_used("/n")) {
         n = parser.get<int>("/n");
-        cout << "/n: " << n << "\n";
+        //cout << "/n: " << n << "\n";
     }
 
     if (parser.is_used("/f")) {
         file_name = parser.get("/f");
-        cout << "/f: " << file_name << "\n";
+        //cout << "/f: " << file_name << "\n";
     }
 
 
@@ -233,7 +244,7 @@ int main(int argc, char* argv[])
     }
     else if (method_code == "lfsr")
     {
-        lfsr(i_vec[0], i_vec[1], i_vec[2], n, file_name);
+        lfsr(is_vec[0], stoi(is_vec[1]), n, file_name);
     }
     else if (method_code == "5p")
     {
