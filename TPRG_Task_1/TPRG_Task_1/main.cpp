@@ -142,6 +142,79 @@ void p5(unsigned int p, unsigned int q1, unsigned int q2, unsigned int q3,  unsi
 }
 
 
+void nfsr(string scoefs1, string scoefs2, string scoefs3, int seed1, int seed2, int seed3, int n, string file_name)
+{
+    ofstream outFile(file_name);
+    const unsigned int bit_size1 = scoefs1.length();
+    const unsigned int bit_size2 = scoefs2.length();
+    const unsigned int bit_size3 = scoefs3.length();
+
+    dynamic_bitset<> reg1(bit_size1, seed1);
+    dynamic_bitset<> coefs1(scoefs1);
+
+    dynamic_bitset<> reg2(bit_size2, seed2);
+    dynamic_bitset<> coefs2(scoefs2);
+
+    dynamic_bitset<> reg3(bit_size3, seed3);
+    dynamic_bitset<> coefs3(scoefs3);
+
+    cout << "Прогресс генерации ПСЧ: \n";
+    const int step = n / 10;
+
+    for (size_t i = 0; i < n; i++)
+    {
+        if (i % step == 0) {
+            cout << '\r' << flush;
+            cout << "  * Выполнено " << (i * 100) / n << "%";
+        }
+
+        // R1
+        bool new_bit = false;
+        for (size_t j = 0; j < bit_size1; j++)
+        {
+            if (coefs1[j])
+            {
+                new_bit ^= reg1[j];
+            }
+        }
+        reg1 >>= 1;
+        reg1.set(bit_size1 - 1, new_bit);
+
+        // R2
+        new_bit = false;
+        for (size_t j = 0; j < bit_size2; j++)
+        {
+            if (coefs2[j])
+            {
+                new_bit ^= reg2[j];
+            }
+        }
+        reg2 >>= 1;
+        reg2.set(bit_size2 - 1, new_bit);
+
+        // R3
+        new_bit = false;
+        for (size_t j = 0; j < bit_size3; j++)
+        {
+            if (coefs3[j])
+            {
+                new_bit ^= reg3[j];
+            }
+        }
+        reg3 >>= 1;
+        reg3.set(bit_size3 - 1, new_bit);
+
+        unsigned int xn = static_cast<unsigned int>(((reg1 & reg2) ^ (reg2 & reg3) ^ reg3).to_ulong());
+        outFile << xn << ',';
+    }
+
+    cout << '\r' << flush;
+    cout << "  * Выполнено 100% \n" << "Результат генерации ПСЧ записан в " << file_name << "\n";
+
+    outFile.close();
+}
+
+
 int main(int argc, char* argv[])
 {
     setlocale(LC_ALL, "Russian");
@@ -152,14 +225,15 @@ int main(int argc, char* argv[])
     parser.set_assign_chars("=:");
 
     parser.add_argument("/g")
-        .help("Методы генерации ПСЧ: lc, add, 5p, lfsr \n");
+        .help("Методы генерации ПСЧ: lc, add, 5p, lfsr, nfsr");
 
     parser.add_argument("/i")
         .help(R"(Инициализационный вектор генератора (параметры записываются через запятую).
                  * lc: m, a, c, x0    
                  * add: m, k, j, j начальных значений
                  * 5p: p, q1, q2, q3, w (q1, q2, q3 < w < 32)
-                 * lfsr: двоичный вектор коэффициентов (до 32 бит), начальное значение регистра)");
+                 * lfsr: двоичный вектор коэффициентов (до 32 бит), начальное значение регистра
+                 * nfsr: три двоичных вектора коэффициентов (до 32 бит), начальные значения трёх регистров)");
 
     parser.add_argument("/n")
         .help("Количество генерируемых чисел")
@@ -196,7 +270,7 @@ int main(int argc, char* argv[])
         stringstream ss(i_str);
         string item;
 
-        if (method_code == "lfsr")
+        if (method_code == "lfsr" or method_code == "nfsr")
         {
             while (getline(ss, item, ','))
             {
@@ -229,11 +303,9 @@ int main(int argc, char* argv[])
     }
 
 
-    // /g:lc /i:39,625,6571,31104 /n:1000000
     if (method_code == "lc") {
         lc(i_vec[0], i_vec[1], i_vec[2], i_vec[3], n, file_name);
     }
-    // /g:add /i:24,55,30000,79,134,213,347,560,907,1467,2374,3841,6215,10056,16271,26327,12598,8925,21523,448,21971,22419,14390,6809,21199,28008,19207,17215,6422,23637,59,23696,23755,17451,11206,28657,9863,8520,18383,26903,15286,12189,27475,9664,7139,16803,23942,10745,4687,15432,20119,5551,25670,1221,26891,28112,23779,17506 /n:100000
     else if (method_code == "add")
     {
         int k = i_vec[0];
@@ -249,6 +321,10 @@ int main(int argc, char* argv[])
     else if (method_code == "5p")
     {
         p5(i_vec[0], i_vec[1], i_vec[2], i_vec[3], i_vec[4], n, file_name);
+    }
+    else if (method_code == "nfsr")
+    {
+        nfsr(is_vec[0], is_vec[1], is_vec[2], stoi(is_vec[3]), stoi(is_vec[4]), stoi(is_vec[5]), n, file_name);
     }
     
     return 0;

@@ -678,7 +678,7 @@ public:
 
     if (argument.m_default_value.has_value() &&
         argument.m_num_args_range != NArgsRange{0, 0}) {
-      stream << "[default: " << argument.m_default_value_repr << "]";
+      stream << "[по-умолчанию: " << argument.m_default_value_repr << "]";
     } else if (argument.m_is_required) {
       stream << "[required]";
     }
