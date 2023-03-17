@@ -1,6 +1,7 @@
 ﻿#include <iostream>
 #include <fstream>
 #include <vector>
+#include <algorithm>
 #include <argparse.hpp>
 #include <boost/dynamic_bitset.hpp>
 
@@ -64,10 +65,61 @@ private:
     }
 };
 
+bool check_lc_conditions(int m, int a, int c)
+{
+    if (gcd(c, m) != 1)
+    {
+        return true;
+    }
+
+    int a1 = a - 1;
+
+    if (m % 4 == 0)
+    {
+        if (a1 % 4 != 0)
+        {
+            return true;
+        }
+    }
+    
+    vector <int> prime_factors;
+    int d = 2;
+    while (m > 1) {
+        while (m % d == 0) {
+            prime_factors.push_back(d);
+            m /= d;
+        }
+        d++;
+        if (d * d > m) {
+            if (m > 1) {
+                prime_factors.push_back(m);
+            }
+            break;
+        }
+    }
+
+
+    for (int p : prime_factors)
+    {
+        if (a1 % p == 0)
+        {
+            return false;
+        }
+    }
+    return true;
+
+
+}
 
 void lc(int m, int a, int c, int x0, int n, string file_name)
 {
     ofstream outFile(file_name);
+
+    if (check_lc_conditions(m, a, c))
+    {
+        cout << "\nУсловия теоремы не выполнены.\n\n";
+    }
+
 
     int xn = x0;
     cout << "Прогресс генерации ПСЧ: \n";
@@ -296,6 +348,7 @@ void mt(int seed, int n, string file_name)
 
     outFile.close();
 }
+
 
 int main(int argc, char* argv[])
 {
