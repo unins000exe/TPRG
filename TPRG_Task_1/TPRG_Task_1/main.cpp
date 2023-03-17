@@ -1,12 +1,69 @@
 ﻿#include <iostream>
 #include <fstream>
 #include <vector>
-#include <bitset>
 #include <argparse.hpp>
 #include <boost/dynamic_bitset.hpp>
 
 using namespace std;
 using namespace boost;
+
+
+class MersenneTwister32 {
+public:
+    explicit MersenneTwister32(uint32_t seed) {
+        mt[0] = seed;
+        for (int i = 1; i < p; ++i)
+        {
+            mt[i] = ((mt[i - 1] ^ (mt[i - 1] >> 30)) + i);
+        }
+        ind = p;
+    }
+
+    uint32_t generate() {
+        if (ind >= p) 
+        {
+            twist();
+        }
+
+        uint32_t y = mt[ind++];
+        y ^= (y >> u);
+        y ^= (y << s) & b;
+        y ^= (y << t) & c;
+        y ^= (y >> l);
+        return y;
+    }
+
+private:
+    static constexpr int p = 624;
+    static constexpr int u = 11;
+    static constexpr int s = 7;
+    static constexpr int t = 15;
+    static constexpr int l = 18;
+    static constexpr int q = 397;
+    static constexpr uint32_t a = 0x9908b0dfUL;
+    static constexpr uint32_t b = 0x9d2c5680UL;
+    static constexpr uint32_t c = 0xefc60000UL;
+    static constexpr uint32_t upper_mask = 0x80000000UL;
+    static constexpr uint32_t lower_mask = 0x7fffffffUL;
+    uint32_t mt[p];
+    int ind;
+
+    void twist() 
+    {
+        for (int i = 0; i < p; ++i) 
+        {
+            uint32_t x = (mt[i] & upper_mask) + (mt[(i + 1) % p] & lower_mask);
+            uint32_t xA = x >> 1;
+            if (x & 1) 
+            {
+                xA ^= a;
+            }
+            mt[i] = mt[(i + q) % p] ^ xA;
+        }
+        ind = 0;
+    }
+};
+
 
 void lc(int m, int a, int c, int x0, int n, string file_name)
 {
@@ -66,6 +123,7 @@ void add(int m, int k, int j, vector<int> lag, int n, string file_name)
 
     outFile.close();
 }
+
 
 void lfsr(string coef, int seed, int n, string file_name)
 {
@@ -215,6 +273,30 @@ void nfsr(string scoefs1, string scoefs2, string scoefs3, int seed1, int seed2, 
 }
 
 
+void mt(int seed, int n, string file_name)
+{
+    ofstream outFile(file_name);
+
+    cout << "Прогресс генерации ПСЧ: \n";
+    int step = n / 10;
+
+    MersenneTwister32 mt32(seed);
+    for (size_t i = 0; i < n; i++)
+    {
+        if (i % step == 0) {
+            cout << '\r' << flush;
+            cout << "  * Выполнено " << (i * 100) / n << "%";
+        }
+
+        outFile << mt32.generate() << ',';
+    }
+
+    cout << '\r' << flush;
+    cout << "  * Выполнено 100% \n" << "Результат генерации ПСЧ записан в " << file_name << "\n";
+
+    outFile.close();
+}
+
 int main(int argc, char* argv[])
 {
     setlocale(LC_ALL, "Russian");
@@ -225,7 +307,7 @@ int main(int argc, char* argv[])
     parser.set_assign_chars("=:");
 
     parser.add_argument("/g")
-        .help("Методы генерации ПСЧ: lc, add, 5p, lfsr, nfsr");
+        .help("Методы генерации ПСЧ: lc, add, 5p, lfsr, nfsr, mt");
 
     parser.add_argument("/i")
         .help(R"(Инициализационный вектор генератора (параметры записываются через запятую).
@@ -233,7 +315,8 @@ int main(int argc, char* argv[])
                  * add: m, k, j, j начальных значений
                  * 5p: p, q1, q2, q3, w (q1, q2, q3 < w < 32)
                  * lfsr: двоичный вектор коэффициентов (до 32 бит), начальное значение регистра
-                 * nfsr: три двоичных вектора коэффициентов (до 32 бит), начальные значения трёх регистров)");
+                 * nfsr: три двоичных вектора коэффициентов (до 32 бит), начальные значения трёх регистров
+                 * mt: начальное значение)");
 
     parser.add_argument("/n")
         .help("Количество генерируемых чисел")
@@ -325,6 +408,10 @@ int main(int argc, char* argv[])
     else if (method_code == "nfsr")
     {
         nfsr(is_vec[0], is_vec[1], is_vec[2], stoi(is_vec[3]), stoi(is_vec[4]), stoi(is_vec[5]), n, file_name);
+    }
+    else if (method_code == "mt")
+    {
+        mt(i_vec[0], n, file_name);
     }
     
     return 0;
