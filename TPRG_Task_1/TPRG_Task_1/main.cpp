@@ -36,16 +36,16 @@ public:
 
 private:
     static constexpr int p = 624;
-    static constexpr int u = 11;
-    static constexpr int s = 7;
-    static constexpr int t = 15;
-    static constexpr int l = 18;
-    static constexpr int q = 397;
-    static constexpr uint32_t a = 0x9908b0dfUL;
-    static constexpr uint32_t b = 0x9d2c5680UL;
-    static constexpr uint32_t c = 0xefc60000UL;
-    static constexpr uint32_t upper_mask = 0x80000000UL;
-    static constexpr uint32_t lower_mask = 0x7fffffffUL;
+    const int u = 11;
+    const int s = 7;
+    const int t = 15;
+    const int l = 18;
+    const int q = 397;
+    const uint32_t a = 0x9908b0dfUL;
+    const uint32_t b = 0x9d2c5680UL;
+    const uint32_t c = 0xefc60000UL;
+    const uint32_t upper_mask = 0x80000000UL;
+    const uint32_t lower_mask = 0x7fffffffUL;
     uint32_t mt[p];
     int ind;
 
@@ -325,7 +325,7 @@ void nfsr(string scoefs1, string scoefs2, string scoefs3, int seed1, int seed2, 
 }
 
 
-void mt(int seed, int n, string file_name)
+void mt(int m, int seed, int n, string file_name)
 {
     ofstream outFile(file_name);
 
@@ -340,7 +340,52 @@ void mt(int seed, int n, string file_name)
             cout << "  * Выполнено " << (i * 100) / n << "%";
         }
 
-        outFile << mt32.generate() << ',';
+        outFile << mt32.generate() % m << ',';
+    }
+
+    cout << '\r' << flush;
+    cout << "  * Выполнено 100% \n" << "Результат генерации ПСЧ записан в " << file_name << "\n";
+
+    outFile.close();
+}
+
+
+void rc4(vector <int> k, int n, string file_name)
+{
+    ofstream outFile(file_name);
+
+    cout << "Прогресс генерации ПСЧ: \n";
+    int step = n / 10;
+
+    int l = k.size();
+    vector <int> s;
+    for (size_t i = 0; i < l; i++)
+    {
+        s.push_back(i);
+    }
+    int j = 0;
+    for (size_t i = 0; i < l; i++)
+    {
+        j = (j + s[i] + k[i]) % l;
+        swap(s[i], s[j]);
+    }
+
+    int i = 0;
+    int t;
+    j = 0;
+    for (size_t k = 0; k < n; k++)
+    {
+        if (k % step == 0) {
+            cout << '\r' << flush;
+            cout << "  * Выполнено " << (k * 100) / n << "%";
+        }
+        
+        i = (i + 1) % l;
+        j = (j + s[i]) % l;
+        swap(s[i], s[j]);
+        t = (s[i] + s[j]) % l;
+
+        outFile << s[t] << ',';
     }
 
     cout << '\r' << flush;
@@ -360,7 +405,7 @@ int main(int argc, char* argv[])
     parser.set_assign_chars("=:");
 
     parser.add_argument("/g")
-        .help("Методы генерации ПСЧ: lc, add, 5p, lfsr, nfsr, mt");
+        .help("Методы генерации ПСЧ: lc, add, 5p, lfsr, nfsr, mt, rc4");
 
     parser.add_argument("/i")
         .help(R"(Инициализационный вектор генератора (параметры записываются через запятую).
@@ -369,7 +414,8 @@ int main(int argc, char* argv[])
                  * 5p: p, q1, q2, q3, w (q1, q2, q3 < w < 32)
                  * lfsr: двоичный вектор коэффициентов (до 32 бит), начальное значение регистра
                  * nfsr: три двоичных вектора коэффициентов (до 32 бит), начальные значения трёх регистров
-                 * mt: начальное значение)");
+                 * mt: модуль, начальное значение
+                 * rc4: 256 начальных значений)");
 
     parser.add_argument("/n")
         .help("Количество генерируемых чисел")
@@ -464,8 +510,13 @@ int main(int argc, char* argv[])
     }
     else if (method_code == "mt")
     {
-        mt(i_vec[0], n, file_name);
+        mt(i_vec[0], i_vec[1], n, file_name);
     }
+    else if (method_code == "rc4")
+    {
+        rc4(i_vec, n, file_name);
+    }
+
     
     return 0;
 
