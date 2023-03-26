@@ -182,7 +182,7 @@ void lfsr(string coef, int seed, int n, string file_name)
     ofstream outFile(file_name);
     const unsigned int bit_size = coef.length();
 
-    dynamic_bitset<> reg(bit_size, seed); // Первоначальное значение регистра задаётся пользователем
+    dynamic_bitset<> reg(bit_size, seed);
     dynamic_bitset<> coefs(coef);
 
     cout << "Прогресс генерации ПСЧ: \n";
@@ -218,30 +218,32 @@ void lfsr(string coef, int seed, int n, string file_name)
 }
 
 
-void p5(unsigned int p, unsigned int q1, unsigned int q2, unsigned int q3,  unsigned int w, int n, string file_name)
+void p5(int p, int q1, int q2, int q3, int w, unsigned long long seed, int n, string file_name)
 {
     ofstream outFile(file_name);
 
-    dynamic_bitset<> reg(w, p); 
+    dynamic_bitset<> reg(p, seed); 
+    dynamic_bitset<> res_reg(w, 0);
 
     cout << "Прогресс генерации ПСЧ: \n";
     int step = n / 10;
    
     for (size_t i = 0; i < n; i++)
     {
-        if (i % step == 0) {
-            cout << '\r' << flush;
-            cout << "  * Выполнено " << (i * 100) / n << "%";
+        //if (i % step == 0) {
+        //    cout << '\r' << flush;
+        //    cout << "  * Выполнено " << (i * 100) / n << "%";
+        //}
+        bool new_bit = false;
+        for (size_t b = 0; b < w; b++)
+        {
+            new_bit = reg[q1] ^ reg[q2] ^ reg[q3] ^ reg[0];
+            reg >>= 1;
+            reg.set(p - 1, new_bit);
+            res_reg.set(w - 1 - b, new_bit);
         }
 
-        bool new_bit = false;
-
-        new_bit = reg[q1] ^ reg[q2] ^ reg[q3] ^ reg[0];
-
-        reg >>= 1;
-        reg.set(w - 1, new_bit);
-
-        unsigned int xn = static_cast<unsigned int>(reg.to_ulong());
+        unsigned int xn = static_cast<unsigned int>(res_reg.to_ulong());
         outFile << xn << ',';
     }
 
@@ -252,7 +254,7 @@ void p5(unsigned int p, unsigned int q1, unsigned int q2, unsigned int q3,  unsi
 }
 
 
-void nfsr(string scoefs1, string scoefs2, string scoefs3, int seed1, int seed2, int seed3, int n, string file_name)
+void nfsr(string scoefs1, string scoefs2, string scoefs3, int seed1, int seed2, int seed3, int w, int n, string file_name)
 {
     ofstream outFile(file_name);
     const unsigned int bit_size1 = scoefs1.length();
@@ -268,6 +270,8 @@ void nfsr(string scoefs1, string scoefs2, string scoefs3, int seed1, int seed2, 
     dynamic_bitset<> reg3(bit_size3, seed3);
     dynamic_bitset<> coefs3(scoefs3);
 
+    dynamic_bitset<> res_reg(w, 0);
+
     cout << "Прогресс генерации ПСЧ: \n";
     const int step = n / 10;
 
@@ -278,43 +282,49 @@ void nfsr(string scoefs1, string scoefs2, string scoefs3, int seed1, int seed2, 
             cout << "  * Выполнено " << (i * 100) / n << "%";
         }
 
-        // R1
-        bool new_bit = false;
-        for (size_t j = 0; j < bit_size1; j++)
+        for (size_t b = 0; b < w; b++)
         {
-            if (coefs1[j])
-            {
-                new_bit ^= reg1[j];
-            }
-        }
-        reg1 >>= 1;
-        reg1.set(bit_size1 - 1, new_bit);
 
-        // R2
-        new_bit = false;
-        for (size_t j = 0; j < bit_size2; j++)
-        {
-            if (coefs2[j])
+            // R1
+            bool bit1 = false;
+            for (size_t j = 0; j < bit_size1; j++)
             {
-                new_bit ^= reg2[j];
+                if (coefs1[j])
+                {
+                    bit1 ^= reg1[j];
+                }
             }
-        }
-        reg2 >>= 1;
-        reg2.set(bit_size2 - 1, new_bit);
+            reg1 >>= 1;
+            reg1.set(bit_size1 - 1, bit1);
 
-        // R3
-        new_bit = false;
-        for (size_t j = 0; j < bit_size3; j++)
-        {
-            if (coefs3[j])
+            // R2
+            bool bit2 = false;
+            for (size_t j = 0; j < bit_size2; j++)
             {
-                new_bit ^= reg3[j];
+                if (coefs2[j])
+                {
+                    bit2 ^= reg2[j];
+                }
             }
-        }
-        reg3 >>= 1;
-        reg3.set(bit_size3 - 1, new_bit);
+            reg2 >>= 1;
+            reg2.set(bit_size2 - 1, bit2);
 
-        unsigned int xn = static_cast<unsigned int>(((reg1 & reg2) ^ (reg2 & reg3) ^ reg3).to_ulong());
+            // R3
+            bool bit3 = false;
+            for (size_t j = 0; j < bit_size3; j++)
+            {
+                if (coefs3[j])
+                {
+                    bit3 ^= reg3[j];
+                }
+            }
+            reg3 >>= 1;
+            reg3.set(bit_size3 - 1, bit3);
+
+            res_reg.set(w - 1 - b, (bit1 & bit2) ^ (bit2 & bit3) ^ bit3);
+        }
+        
+        unsigned int xn = static_cast<unsigned int>(res_reg.to_ulong());
         outFile << xn << ',';
     }
 
@@ -395,6 +405,82 @@ void rc4(vector <int> k, int n, string file_name)
 }
 
 
+void rsa(int pq, int e, int x0, int w, int n, string file_name)
+{
+    ofstream outFile(file_name);
+
+    dynamic_bitset<> z(w, 0);
+
+    unsigned int xi = x0;
+
+    cout << "Прогресс генерации ПСЧ: \n";
+    const int step = n / 10;
+
+    for (size_t i = 0; i < n; i++)
+    {
+        if (i % step == 0) {
+            cout << '\r' << flush;
+            cout << "  * Выполнено " << (i * 100) / n << "%";
+        }
+
+        bool new_bit = false;
+        for (size_t j = 0; j < w; j++)
+        {
+            unsigned int x = xi;
+            for (size_t d = 1; d < e; d++)
+            {
+                xi = xi * x % pq;
+            }
+            z.set(w - 1 - j, xi & 1);
+        }
+
+        unsigned int xn = static_cast<unsigned int>(z.to_ulong());
+        outFile << xn << ',';
+    }
+
+    cout << '\r' << flush;
+    cout << "  * Выполнено 100% \n" << "Результат генерации ПСЧ записан в " << file_name << "\n";
+
+    outFile.close();
+}
+
+
+void bbs(int x0, int w, int n, string file_name)
+{
+    ofstream outFile(file_name);
+    dynamic_bitset<> z(w, 0);
+
+    const unsigned int pq = 16637;
+    unsigned int xi = x0 * x0 % pq;
+
+    cout << "Прогресс генерации ПСЧ: \n";
+    const int step = n / 10;
+
+    for (size_t i = 0; i < n; i++)
+    {
+        if (i % step == 0) {
+            cout << '\r' << flush;
+            cout << "  * Выполнено " << (i * 100) / n << "%";
+        }
+
+        bool new_bit = false;
+        for (size_t j = 0; j < w; j++)
+        {
+            xi = xi * xi % pq;
+            z.set(w - 1 - j, xi & 1);
+            cout << (xi & 1) << " ";
+        }
+
+        unsigned int xn = static_cast<unsigned int>(z.to_ulong());
+        outFile << xn << ',';
+    }
+
+    cout << '\r' << flush;
+    cout << "  * Выполнено 100% \n" << "Результат генерации ПСЧ записан в " << file_name << "\n";
+
+    outFile.close();
+}
+
 int main(int argc, char* argv[])
 {
     setlocale(LC_ALL, "Russian");
@@ -405,7 +491,7 @@ int main(int argc, char* argv[])
     parser.set_assign_chars("=:");
 
     parser.add_argument("/g")
-        .help("Методы генерации ПСЧ: lc, add, 5p, lfsr, nfsr, mt, rc4");
+        .help("Методы генерации ПСЧ: lc, add, 5p, lfsr, nfsr, mt, rc4, rsa");
 
     parser.add_argument("/i")
         .help(R"(Инициализационный вектор генератора (параметры записываются через запятую).
@@ -415,7 +501,9 @@ int main(int argc, char* argv[])
                  * lfsr: двоичный вектор коэффициентов (до 32 бит), начальное значение регистра
                  * nfsr: три двоичных вектора коэффициентов (до 32 бит), начальные значения трёх регистров
                  * mt: модуль, начальное значение
-                 * rc4: 256 начальных значений)");
+                 * rc4: 256 начальных значений
+                 * rsa: модуль n, число e, начальное значение x
+                 * bbs: начальное значение x (взаимно простое с n = 16637)");
 
     parser.add_argument("/n")
         .help("Количество генерируемых чисел")
@@ -452,7 +540,7 @@ int main(int argc, char* argv[])
         stringstream ss(i_str);
         string item;
 
-        if (method_code == "lfsr" or method_code == "nfsr")
+        if (method_code == "lfsr" or method_code == "nfsr" or method_code == "5p")
         {
             while (getline(ss, item, ','))
             {
@@ -502,11 +590,11 @@ int main(int argc, char* argv[])
     }
     else if (method_code == "5p")
     {
-        p5(i_vec[0], i_vec[1], i_vec[2], i_vec[3], i_vec[4], n, file_name);
+        p5(stoi(is_vec[0]), stoi(is_vec[1]), stoi(is_vec[2]), stoi(is_vec[3]), stoi(is_vec[4]), stoull(is_vec[5]), n, file_name);
     }
     else if (method_code == "nfsr")
     {
-        nfsr(is_vec[0], is_vec[1], is_vec[2], stoi(is_vec[3]), stoi(is_vec[4]), stoi(is_vec[5]), n, file_name);
+        nfsr(is_vec[0], is_vec[1], is_vec[2], stoi(is_vec[3]), stoi(is_vec[4]), stoi(is_vec[5]), stoi(is_vec[6]), n, file_name);
     }
     else if (method_code == "mt")
     {
@@ -516,8 +604,16 @@ int main(int argc, char* argv[])
     {
         rc4(i_vec, n, file_name);
     }
+    else if (method_code == "rsa")
+    {
+        rsa(i_vec[0], i_vec[1], i_vec[2], i_vec[3], n, file_name);
+    }
+    else if (method_code == "bbs")
+    {
+        bbs(i_vec[0], i_vec[1], n, file_name);
+    }
 
-    
+
     return 0;
 
 }
