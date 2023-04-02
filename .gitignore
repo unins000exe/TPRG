@@ -13,3 +13,6 @@ packages
 x64
 *.iobj
 *.ipdb
+TPRG_Task_2/.vs/TPRG_Task_2/v16/.suo
+*.db
+*.ipch
