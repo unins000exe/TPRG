@@ -14,13 +14,15 @@ void st(vector <double> &u, double a, double b)
     }
 }
 
-// ?u1 и u2?
 void tr(vector <double>& u, double a, double b)
 {
-    for (size_t i = 0; i < u.size(); i++)
+    double u0 = u[0]; // надо в цикле сохранять
+    for (size_t i = 0; i < u.size() - 1; i++)
     {
-        u[i] = b * u[i] + a;
+        u[i] = b * (u[i] + u[i + 1]) + a;
     }
+    // Здесь U1 - последнее число, U2 - самое первое
+    u[u.size() - 1] = b * (u[u.size() - 1] + u0) + a;
 }
 
 void ex(vector <double>& u, double a, double b)
@@ -28,6 +30,48 @@ void ex(vector <double>& u, double a, double b)
     for (size_t i = 0; i < u.size(); i++)
     {
         u[i] = -b * log(u[i]) + a;
+    }
+}
+
+void nr(vector <double>& u, double mu, double sigma)
+{
+    const double PI = acos(-1.0);
+    for (size_t i = 0; i < u.size() - 1; i += 2)
+    {
+        double u1 = u[i];
+        u[i] = mu + sigma * sqrt(-2 * log(1 - u[i])) * cos(2 * PI * u[i + 1]);
+        u[i + 1] = mu + sigma * sqrt(-2 * log(1 - u1)) * sin(2 * PI * u[i + 1]);
+    }
+}
+
+// not gm
+void gm(vector <double>& u, double mu, double sigma)
+{
+    const double PI = acos(-1.0);
+    for (size_t i = 0; i < u.size() - 1; i += 2)
+    {
+        double u1 = u[i];
+        u[i] = mu + sigma * sqrt(-2 * log(1 - u[i])) * cos(2 * PI * u[i + 1]);
+        u[i + 1] = mu + sigma * sqrt(-2 * log(1 - u1)) * sin(2 * PI * u[i + 1]);
+    }
+}
+
+
+void ln(vector <double>& u, double a, double b)
+{
+    nr(u, a, b);
+    for (size_t i = 0; i < u.size() - 1; i++)
+    {
+        u[i] = a + exp(b - u[i]);
+    }
+}
+
+
+void ls(vector <double>& u, double a, double b)
+{
+    for (size_t i = 0; i < u.size() - 1; i++)
+    {
+        u[i] = a + b * log(u[i] / (1 - u[i]));
     }
 }
 
@@ -65,7 +109,7 @@ int main(int argc, char* argv[])
     }
 
     string method_code;
-    string infile = "rnd.dat";
+    string infile = "D:/CSIT/TPRG/TPRG_Task_1/rnd.dat";
     string outfile = "";
     double p1, p2;
 
@@ -88,7 +132,7 @@ int main(int argc, char* argv[])
 
     const int max = 1024; // ?Нужно ли считать максимальное число в файле?
 
-    // Считывание чисел из файла и их приведение их к случайной величине
+    // Считывание чисел из файла и приведение их к случайной величине
     vector <double> numbers;
     ifstream inputFile(infile);
     if (inputFile)
@@ -123,6 +167,22 @@ int main(int argc, char* argv[])
     else if (method_code == "ex")
     {
         ex(numbers, p1, p2);
+    }
+    else if (method_code == "nr")
+    {
+        nr(numbers, p1, p2);
+    }
+    else if (method_code == "gm")
+    {
+        gm(numbers, p1, p2);
+    }
+    else if (method_code == "ln")
+    {
+        ln(numbers, p1, p2);
+    }
+    else if (method_code == "ls")
+    {
+        ls(numbers, p1, p2);
     }
 
     ofstream outFile(outfile);
