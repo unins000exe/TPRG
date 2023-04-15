@@ -2,6 +2,7 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
+#include <cmath>
 #include <argparse.hpp>
 
 using namespace std;
@@ -44,23 +45,36 @@ void nr(vector <double>& u, double mu, double sigma)
     }
 }
 
-// not gm
-void gm(vector <double>& u, double mu, double sigma)
+void gm(vector <double>& u, double a, double b, double c)
 {
-    const double PI = acos(-1.0);
-    for (size_t i = 0; i < u.size() - 1; i += 2)
+    vector <double> u_copy(u);
+    if (floor(c) == c)
     {
-        double u1 = u[i];
-        u[i] = mu + sigma * sqrt(-2 * log(1 - u[i])) * cos(2 * PI * u[i + 1]);
-        u[i + 1] = mu + sigma * sqrt(-2 * log(1 - u1)) * sin(2 * PI * u[i + 1]);
+        int len = u.size();
+        double lg_uk;
+        for (size_t i = 0; i < len; i++)
+        {
+            lg_uk = 1;
+            for (size_t j = 0; j < c; ++j)
+            {
+                // Модуль len нужен для циклического сдвига "окна"
+                lg_uk *= (1 - u_copy[(i + j) % len]);
+            }
+            u[i] = a - b * log(lg_uk);
+        }
     }
+    else
+    {
+        cout << "Число c должно быть целым!\n";
+    }
+
 }
 
 
 void ln(vector <double>& u, double a, double b)
 {
     nr(u, a, b);
-    for (size_t i = 0; i < u.size() - 1; i++)
+    for (size_t i = 0; i < u.size(); i++)
     {
         u[i] = a + exp(b - u[i]);
     }
@@ -69,9 +83,46 @@ void ln(vector <double>& u, double a, double b)
 
 void ls(vector <double>& u, double a, double b)
 {
-    for (size_t i = 0; i < u.size() - 1; i++)
+    for (size_t i = 0; i < u.size(); i++)
     {
         u[i] = a + b * log(u[i] / (1 - u[i]));
+    }
+}
+
+
+int binomialCoeff(int n, int k)
+{
+    if (k > n)
+        return 0;
+    if (k == 0 || k == n)
+        return 1;
+
+    return binomialCoeff(n - 1, k - 1)
+        + binomialCoeff(n - 1, k);
+}
+
+void bi(vector <double>& u, double a, double b)
+{
+
+    for (size_t i = 0; i < u.size(); i++)
+    {
+        double s = 0;
+        int k = 0;
+        while (true)
+        {
+            s += binomialCoeff(b, k) * pow(a, k) * pow((1 - a), b - k);
+            if (s > u[i])
+            {
+                u[i] = k;
+                break;
+            }
+            if (k < b - 1)
+            {
+                k += 1;
+                continue;
+            }
+            u[i] = b;
+        }
     }
 }
 
@@ -79,7 +130,7 @@ int main(int argc, char* argv[])
 {
     setlocale(LC_ALL, "Russian");
 
-    argparse::ArgumentParser parser("Преобразование ПСЧ к заданному распределению", "1.0");
+    argparse::ArgumentParser parser("Преобразование ПСЧ к заданному распределению", "1.1");
 
     parser.set_prefix_chars("-/");
     parser.set_assign_chars("=:");
@@ -99,6 +150,10 @@ int main(int argc, char* argv[])
         .help("Второй параметр")
         .scan<'g', double>();
 
+    parser.add_argument("/p3")
+        .help("Третий параметр (для гамма распределения)")
+        .scan<'g', double>();
+
     try {
         parser.parse_args(argc, argv);
     }
@@ -111,11 +166,15 @@ int main(int argc, char* argv[])
     string method_code;
     string infile = "D:/CSIT/TPRG/TPRG_Task_1/rnd.dat";
     string outfile = "";
-    double p1, p2;
+    double p1, p2, p3;
 
     if (parser.is_used("/d")) {
         method_code = parser.get("/d");
-        outfile = "rnc_" + method_code + ".dat";
+        outfile = "distr_" + method_code + ".dat";
+    }
+    else
+    {
+        return 1;
     }
 
     if (parser.is_used("/f")) {
@@ -130,7 +189,15 @@ int main(int argc, char* argv[])
         p2 = parser.get<double>("/p2");
     }
 
-    const int max = 1024; // ?Нужно ли считать максимальное число в файле?
+    if (parser.is_used("/p2")) {
+        p2 = parser.get<double>("/p2");
+    }
+
+    if (parser.is_used("/p3")) {
+        p3 = parser.get<double>("/p3");
+    }
+
+    const int max = 1000; // ?Нужно ли считать максимальное число в файле?
 
     // Считывание чисел из файла и приведение их к случайной величине
     vector <double> numbers;
@@ -174,7 +241,7 @@ int main(int argc, char* argv[])
     }
     else if (method_code == "gm")
     {
-        gm(numbers, p1, p2);
+        gm(numbers, p1, p2, p3);
     }
     else if (method_code == "ln")
     {
@@ -184,6 +251,10 @@ int main(int argc, char* argv[])
     {
         ls(numbers, p1, p2);
     }
+    else if(method_code == "bi")
+    {
+        bi(numbers, p1, p2);
+    }
 
     ofstream outFile(outfile);
 
@@ -191,6 +262,8 @@ int main(int argc, char* argv[])
     {
         outFile << x << ',';
     }
+
+    cout << "Результат записан в " << outfile << "\n";
     
     outFile.close();
 
