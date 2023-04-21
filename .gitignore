@@ -16,3 +16,12 @@ x64
 TPRG_Task_2/.vs/TPRG_Task_2/v16/.suo
 *.db
 *.ipch
+*.pygtex
+*.pygstyle
+*.fdb_latexmk
+*.log
+*.out
+*.fls
+*.aux
+*.toc
+*.gz
