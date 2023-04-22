@@ -276,6 +276,13 @@
     \typework{\cyr\cyrn\cyra\cyrp\cyri\cyrs\cyra\cyrn}
 }
 
+\DeclareOption{pract_otchet}{%
+    \worktype{\cyr\CYRO\cyrt\cyrch\cyre\cyrt\ \cyrp\cyro\ \cyrp\cyrr\cyra\cyrk\cyrt\cyri\cyrch\cyre\cyrs\cyrk\cyro\cyrm\cyru\ \cyrk\cyru\cyrr\cyrs\cyru}
+    \workname{\MakeUppercase{\@worktype}}
+    \renewcommand{\maketitle}{\RefMakeTitle}
+    \typework{\cyr\cyrn\cyra\cyrp\cyri\cyrs\cyra\cyrn}
+}
+
 \DeclareOption{och}{%
     \otdelenie{\cyr\cyro\cyrch\cyrn\cyro\cyrishrt\ \cyrf\cyro\cyrr\cyrm%
     \cyrery\ \cyro\cyrb\cyru\cyrch\cyre\cyrn\cyri\cyrya}
