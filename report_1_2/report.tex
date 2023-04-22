@@ -334,9 +334,43 @@
   \item 256 начальных значений $S_i$.
 \end{itemize}
 
-
 \subsection{ГПСЧ на основе RSA}
-\subsection{Алгоритм Блюма-Блюма-Шуба}
+Описание алгоритма:
+\begin{enumerate}
+  \item Инициализация чисел: $n = pq$, где $p$ и $q$ простые числа, числа $e$: $1 < e < f$, НОД($e, f$) = 1, $f = (p - 1)(q - 1)$ и числа $x_0$ из интервала $[1, n - 1]$.
+  \item \texttt{For i = 1 to w do}
+        \begin{enumerate}
+          \item $x_i \leftarrow x_{i-1}^e \mod n$.
+          \item $z_i \leftarrow $ последний значащий бит $x_i$
+        \end{enumerate}
+  \item Вернуть $z_1, \dots, z_w$.
+\end{enumerate}
+
+Параметры:
+\begin{itemize}
+  \item $n$, модуль;
+  \item $e$, число;
+  \item $w$, длина слова;
+  \item $x_0$, начальное значение.
+\end{itemize}
+
+\subsection{Алгоритм Блюм-Блюма-Шуба}
+Описание алгоритма:
+\begin{enumerate}
+  \item Инициализация числа: $n = 127 \cdot 131 = 16637$.
+  \item Вычислим $x_0 = x^2 \mod n$, которое будет начальным вектором.
+  \item \texttt{For i = 1 to w do}
+        \begin{enumerate}
+          \item $x_i \leftarrow x_{i-1}^2 \mod n$.
+          \item $z_i \leftarrow $ последний значащий бит $x_i$
+        \end{enumerate}
+  \item Вернуть $z_1, \dots, z_w$.
+\end{enumerate}
+
+Параметры:
+\begin{itemize}
+  \item $n$, модуль;
+\end{itemize}
 
 \section{Преобразование ПСЧ к заданному распределению}
 Создать программу для преобразования последовательности ПСЧ в другую последовательность
@@ -352,15 +386,51 @@
   \item Биномиальное распределение.
 \end{enumerate}
 
-\subsection{Стандартное равномерное с заданным интервалом}
-\subsection{Треугольное распределение}
-\subsection{Общее экспоненциальное распределение}
-\subsection{Нормальное распределение}
-\subsection{Гамма распределение}
-\subsection{Логнормальное распределение}
-\subsection{Логистическое распределение}
-\subsection{Биномиальное распределение}
+\subsection{Метод генерации случайной величины}
+Если максимальное значение равномерного целого случайного числа $X$
+равно $(m - 1)$, для генерации стандартных равномерных случайных чисел 
+необходимо применять следующую формулу: $U = X / m$.
 
+\subsection{Стандартное равномерное с заданным интервалом}
+\[ Y = bU + a \]
+
+\subsection{Треугольное распределение}
+\[ Y = a + b(U_1 + U_2 - 1) \]
+
+\subsection{Общее экспоненциальное распределение}
+\[ Y = -b \ln(U) + a \]
+
+\subsection{Нормальное распределение}
+\[ Z_1 = \mu \sigma \sqrt{-2 \ln(1 - U_1)} \cos(2 \pi U_2) \]
+\[ Z_2 = \mu \sigma \sqrt{-2 \ln(1 - U_1)} \sin(2 \pi U_2) \]
+
+\subsection{Гамма распределение}
+Алгоритм для $c = k$ ($k$ -- целое число)
+\[ Y = a - b \ln \{(1 - U_1) \dots (1 - U_k)\} \]
+
+\subsection{Логнормальное распределение}
+\[ Y = a + \exp(b - Z) \]
+
+\subsection{Логистическое распределение}
+\[ Y = a + b \ln(\frac{U}{1 - U})\]
+
+\subsection{Биномиальное распределение}
+Следующий псевдокод представляет алгоритм преоб
+\begin{minted}[fontsize=\footnotesize]{text}
+y = binominal(x, a, b, m):
+  u = U(x)
+  s = 0
+  k = 0
+  loopstart:
+    s = s + C(k, b) + a^k * (1 - a)^(b - k)
+    if s > u:
+      y = k
+      Завершить
+    if k < b - 1:
+      k = k + 1
+      move to loopstart
+    y = b
+\end{minted}
 \newpage
 \appendix
     \section{Код задания 1}
