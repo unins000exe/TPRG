@@ -131,7 +131,7 @@ void lc(int m, int a, int c, int x0, int n, string file_name)
             cout << "  * Выполнено " << (i * 100) / n << "%";
         }
 
-        outFile << xn << ',';
+        outFile << xn % 1024 << ',';
         xn = (a * x0 + c) % m;
         x0 = xn;
     }
@@ -167,7 +167,7 @@ void add(int m, int k, int j, vector<int> lag, int n, string file_name)
         lag.erase(lag.begin());
         lag.push_back(xn);
             
-        outFile << xn << ',';
+        outFile << xn % 1024 << ',';
     }
 
     cout << '\r' << flush;
@@ -208,7 +208,7 @@ void lfsr(string coef, int seed, int n, string file_name)
         reg.set(bit_size - 1, new_bit);
 
         unsigned int xn = static_cast<unsigned int>(reg.to_ulong());
-        outFile << xn << ',';
+        outFile << xn % 1024 << ',';
     }
 
     cout << '\r' << flush;
@@ -244,7 +244,7 @@ void p5(int p, int q1, int q2, int q3, int w, unsigned long long seed, int n, st
         }
 
         unsigned int xn = static_cast<unsigned int>(res_reg.to_ulong());
-        outFile << xn << ',';
+        outFile << xn % 1024 << ',';
     }
 
     cout << '\r' << flush;
@@ -325,7 +325,7 @@ void nfsr(string scoefs1, string scoefs2, string scoefs3, int seed1, int seed2, 
         }
         
         unsigned int xn = static_cast<unsigned int>(res_reg.to_ulong());
-        outFile << xn << ',';
+        outFile << xn % 1024 << ',';
     }
 
     cout << '\r' << flush;
@@ -350,7 +350,7 @@ void mt(int m, int seed, int n, string file_name)
             cout << "  * Выполнено " << (i * 100) / n << "%";
         }
 
-        outFile << mt32.generate() % m << ',';
+        outFile << mt32.generate() % 1024 % m << ',';
     }
 
     cout << '\r' << flush;
@@ -395,7 +395,7 @@ void rc4(vector <int> k, int n, string file_name)
         swap(s[i], s[j]);
         t = (s[i] + s[j]) % l;
 
-        outFile << s[t] << ',';
+        outFile << s[t] % 1024 << ',';
     }
 
     cout << '\r' << flush;
@@ -435,7 +435,7 @@ void rsa(int pq, int e, int x0, int w, int n, string file_name)
         }
 
         unsigned int xn = static_cast<unsigned int>(z.to_ulong());
-        outFile << xn << ',';
+        outFile << xn % 1024 << ',';
     }
 
     cout << '\r' << flush;
@@ -472,7 +472,7 @@ void bbs(int x0, int w, int n, string file_name)
         }
 
         unsigned int xn = static_cast<unsigned int>(z.to_ulong());
-        outFile << xn << ',';
+        outFile << xn % 1024 << ',';
     }
 
     cout << '\r' << flush;
