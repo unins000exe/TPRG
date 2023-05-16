@@ -2,6 +2,8 @@ import numpy as np
 import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
+import random
+from scipy.stats import chi2
 
 
 def calc_probs(rnd):
@@ -13,6 +15,17 @@ def calc_probs(rnd):
         probs[num] = probability
 
     return probs
+
+
+def count_elems(rnd):
+    element_count = {}
+    for element in rnd:
+        if element in element_count:
+            element_count[element] += 1
+        else:
+            element_count[element] = 1
+
+    return element_count
 
 
 def math_exp(probs):
@@ -70,10 +83,30 @@ def graph_sigma(rnd):
     plt.show()
 
 
+def chi_square(rnd, alpha):
+    observed = np.array(list(count_elems(rnd).values()))
+    k = observed.shape[0]
+    expected = np.array([n / k for _ in range(k)])
+
+    diff = observed - expected
+    squared_diff = np.square(diff)
+    chi_squared = np.sum(squared_diff / expected)
+
+    critical = chi2.ppf(1 - alpha, k - 1)
+    print(chi_squared, critical)
+    return chi_squared <= critical
+
+
 if __name__ == '__main__':
     with open('rnd.dat', 'r') as infile:
         rnd = [int(i) / 1024 for i in infile.read()[:-1].split(',')]
         n = len(rnd)
 
-    graph_me(rnd)
-    graph_sigma(rnd)
+    # rnd = [random.uniform(0, 0.999999999) for _ in range(n)]
+    # graph_me(rnd)
+    # graph_sigma(rnd)
+
+    chi = chi_square(rnd, 0.05)
+    print('chi', chi)
+
+
