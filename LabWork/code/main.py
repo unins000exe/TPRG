@@ -282,8 +282,8 @@ if __name__ == '__main__':
         u = [i / mx for i in u]
         n = len(u)
 
-    # graph_me(u)
-    # graph_sigma(u)
+    graph_me(u)
+    graph_sigma(u)
 
     print('Критерий хи-квадрат', chi_square())
     print('Критерий серий', series())
