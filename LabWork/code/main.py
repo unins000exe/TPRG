@@ -98,11 +98,11 @@ def chi_square(observed=None, expected=None, k=None, alpha=0.05):
     chi_squared = np.sum(squared_diff / expected)
 
     critical = chi2.ppf(1 - alpha, k - 1)
-    print(chi_squared, critical)
+    # print(chi_squared, critical)
     return chi_squared <= critical
 
 
-def series_test(u, d=8):
+def series(d=8):
     observed = np.array((d * d) * [0])
     for i in range(n // 2):
         q, r = math.floor(u[2 * i] * d), math.floor(u[2 * i + 1] * d)
@@ -113,7 +113,7 @@ def series_test(u, d=8):
     return chi_square(observed, expected, d * d)
 
 
-def intervals(u, d=16):
+def intervals(d=16):
     j, s, count = -1, 0, 8 * [0]
     num_of_intervals = n / 10
 
@@ -159,7 +159,7 @@ def stirling(n, k):
         return (k1 * (stirling(n1 - 1, k1))) + stirling(n1 - 1, k1 - 1)
 
 
-def poker(u, d=16):
+def poker(d=16):
     observed = 5 * [0]
     for i in range(n // 5):
         hand = [math.floor(v * d) for v in u[i * 5:i * 5 + 5]]
@@ -229,17 +229,65 @@ def run(d=1024):
 
     expected = 0.0
     for i in range(6):
-        pass
+        for j in range(6):
+            expected += (observed[i + 1] - n * b[i]) * (observed[j + 1] - n * b[j]) * a[i][j]
+    expected /= n
+
+    # К данному критерию не применяется хи-квадрат, вместо этого сравнивается статистика этого критерия
+    return 1.653 <= expected <= 12.59
+
+
+def collision():
+    m = 128 * n
+    v = u.copy()
+    v.sort()
+    collisions = 0
+    for i in range(n - 1):
+        if abs(v[i] - v[i + 1]) <= 1 / m:
+            print(v[i], v[i + 1])
+            collisions += 1
+
+    print(collisions)
+
+    # a = n * [0]
+    # a[1] = 1
+    # j0, j1 = 1, 1
+    # for _ in range(n - 1):
+    #     j1 += 1
+    #     for j in range(j1, j0, -1):
+    #         a[j] = (j / m) * a[j] + ((1 + 1 / m) - (j / m)) * a[j - 1]
+    #         if a[j] < 10e-10:
+    #             a[j] = 0
+    #             if j == j1:
+    #                 j1 -= 1
+    #             elif j == j0:
+    #                 j0 += 1
+    # print(a)
+    # t_table = [0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99, 1.0]
+    # p, t = 0, 1
+    # j = j0 - 1
+    # while t != len(t_table) - 1 and p <= t_table[t]:
+    #     j += 1
+    #     p = p + a[j]
+    #     t += 1
+    #
+    # print(1 - p, n - j - 1)
 
 
 if __name__ == '__main__':
-    with open('rnd.dat', 'r') as infile:
-        u = [int(i) / 1024 for i in infile.read()[:-1].split(',')]
+    rnd_name = input('Введите имя файла с ПСЧ ')
+    with open(rnd_name, 'r') as infile:
+        u = [int(i) for i in infile.read()[:-1].split(',')]
+        mx = max(u) + 1
+        u = [i / mx for i in u]
         n = len(u)
 
-    # rnd = [random.uniform(0, 0.999999999) for _ in range(n)]
-    # graph_me(rnd)
-    # graph_sigma(rnd)
-    print(permutation())
+    # graph_me(u)
+    # graph_sigma(u)
 
-    # print(intervals(rnd, 0.25, 0.75, 10))
+    print('Критерий хи-квадрат', chi_square())
+    print('Критерий серий', series())
+    print('Критерий интервалов', intervals())
+    print('Критерий разбиений', poker())
+    print('Критерий перестановок', permutation())
+    print('Критерий монотонности', run())
