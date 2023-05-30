@@ -153,7 +153,7 @@ void add(int m, int k, int j, vector<int> lag, int n, string file_name)
     int xn;
     for (size_t i = 0; i < j; i++)
     {
-        outFile << lag[i] << ',';
+        outFile << lag[i] % 1024 << ',';
     }
 
     for (size_t i = 55; i < n; i++)
