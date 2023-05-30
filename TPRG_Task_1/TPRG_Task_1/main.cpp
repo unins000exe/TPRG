@@ -468,7 +468,6 @@ void bbs(int x0, int w, int n, string file_name)
         {
             xi = xi * xi % pq;
             z.set(w - 1 - j, xi & 1);
-            cout << (xi & 1) << " ";
         }
 
         unsigned int xn = static_cast<unsigned int>(z.to_ulong());
